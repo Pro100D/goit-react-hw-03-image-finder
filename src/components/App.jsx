@@ -18,14 +18,46 @@ export class App extends Component {
     modalAlt: '',
   };
 
+  async componentDidUpdate(prevProps, prevState) {
+    if (prevState.searchValue !== this.state.searchValue) {
+      this.setState({ isLoad: true });
+      const response = await fetchImages(this.state.searchValue, 1);
+      this.setState({
+        images: response,
+        searchValue: this.state.searchValue,
+        isLoad: false,
+        pageNr: 1,
+      });
+    }
+  }
+
+  handleSubmit = async value => {
+    if (value === this.state.searchValue) {
+      return;
+    }
+
+    this.setState({
+      searchValue: value,
+
+      images: [],
+      page: 1,
+      isLoad: false,
+      modalOpen: false,
+      modalImg: '',
+      modalAlt: '',
+    });
+  };
+
   handleClickMore = async () => {
     const response = await fetchImages(
       this.state.searchValue,
       this.state.page + 1
     );
-    this.setState({
-      images: [...this.state.images, ...response],
-      page: this.state.page + 1,
+    this.setState(prevState => {
+      return {
+        images: [...prevState.images, ...response],
+        page: prevState.page + 1,
+      };
     });
   };
 
@@ -37,39 +69,22 @@ export class App extends Component {
     });
   };
 
-  handleCloseModal = () => {
+  handleCloseModal = e => {
+    if (e.currentTarget === e.target) {
+      this.setState({
+        modalOpen: false,
+        modalImg: '',
+        modalAlt: '',
+      });
+    }
+  };
+  handleKeydownCloseModal = () => {
     this.setState({
       modalOpen: false,
       modalImg: '',
       modalAlt: '',
     });
   };
-
-  handleSubmit = async value => {
-    if (value === this.state.searchValue) {
-      return;
-    }
-
-    this.setState({ isLoad: true });
-    const response = await fetchImages(value, 1);
-    this.setState({
-      images: response,
-      searchValue: value,
-      isLoad: false,
-      pageNr: 1,
-    });
-    this.setState({ searchValue: value });
-  };
-
-  handleKeyDown = event => {
-    if (event.code === 'Escape') {
-      this.handleCloseModal();
-    }
-  };
-
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleKeyDown);
-  }
 
   render() {
     const { images, modalOpen, isLoad, modalImg, modalAlt } = this.state;
@@ -92,6 +107,7 @@ export class App extends Component {
             src={modalImg}
             alt={modalAlt}
             handleClose={this.handleCloseModal}
+            closeModalOnkeyDown={this.handleKeydownCloseModal}
           />
         )}
       </>
