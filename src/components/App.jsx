@@ -16,17 +16,20 @@ export class App extends Component {
     modalOpen: false,
     modalImg: '',
     modalAlt: '',
+    showBtn: false,
   };
 
   async componentDidUpdate(prevProps, prevState) {
-    if (prevState.searchValue !== this.state.searchValue) {
+    const { searchValue, page, images } = this.state;
+
+    if (prevState.searchValue !== searchValue || prevState.page !== page) {
       this.setState({ isLoad: true });
-      const response = await fetchImages(this.state.searchValue, 1);
+      const response = await fetchImages(searchValue, page);
+
       this.setState({
-        images: response,
-        searchValue: this.state.searchValue,
+        images: [...images, ...response.hits],
         isLoad: false,
-        pageNr: 1,
+        showBtn: totalHits => page < Math.ceil(totalHits / 12),
       });
     }
   }
@@ -38,7 +41,6 @@ export class App extends Component {
 
     this.setState({
       searchValue: value,
-
       images: [],
       page: 1,
       isLoad: false,
@@ -49,13 +51,8 @@ export class App extends Component {
   };
 
   handleClickMore = async () => {
-    const response = await fetchImages(
-      this.state.searchValue,
-      this.state.page + 1
-    );
     this.setState(prevState => {
       return {
-        images: [...prevState.images, ...response],
         page: prevState.page + 1,
       };
     });
@@ -87,21 +84,17 @@ export class App extends Component {
   };
 
   render() {
-    const { images, modalOpen, isLoad, modalImg, modalAlt } = this.state;
+    const { images, modalOpen, isLoad, modalImg, modalAlt, showBtn } =
+      this.state;
 
     return (
       <>
-        {isLoad ? (
-          <Loader />
-        ) : (
-          <>
-            <SearchBar onSubmit={this.handleSubmit} />
-            <Gallary arrayImage={images} onImgClick={this.handleImageClick} />
-            {images.length > 0 ? (
-              <Button onClick={this.handleClickMore} />
-            ) : null}
-          </>
-        )}
+        {isLoad && <Loader />}
+
+        <SearchBar onSubmit={this.handleSubmit} />
+        <Gallary arrayImage={images} onImgClick={this.handleImageClick} />
+        {showBtn && <Button onClick={this.handleClickMore} />}
+
         {modalOpen && (
           <Modal
             src={modalImg}

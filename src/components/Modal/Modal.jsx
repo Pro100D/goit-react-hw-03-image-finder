@@ -2,12 +2,6 @@ import PropTypes from 'prop-types';
 import { Component } from 'react';
 
 export class Modal extends Component {
-  state = {
-    src: this.props.src,
-    alt: this.props.alt,
-    handleClose: this.props.handleClose,
-  };
-
   componentDidMount() {
     window.addEventListener('keydown', this.handleKeyDown);
   }
@@ -21,7 +15,7 @@ export class Modal extends Component {
   }
 
   render() {
-    const { src, handleClose, alt } = this.state;
+    const { src, handleClose, alt } = this.props;
 
     return (
       <div className="Overlay" onClick={handleClose}>
