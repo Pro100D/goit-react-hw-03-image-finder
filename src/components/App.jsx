@@ -24,13 +24,21 @@ export class App extends Component {
 
     if (prevState.searchValue !== searchValue || prevState.page !== page) {
       this.setState({ isLoad: true });
-      const response = await fetchImages(searchValue, page);
+      try {
+        const response = await fetchImages(searchValue, page);
 
-      this.setState({
-        images: [...images, ...response.hits],
-        isLoad: false,
-        showBtn: totalHits => page < Math.ceil(totalHits / 12),
-      });
+        this.setState({
+          images: [...images, ...response.hits],
+
+          showBtn: this.state.page < Math.ceil(response.totalHits / 12),
+        });
+      } catch (error) {
+        console.log(error);
+      } finally {
+        this.setState({
+          isLoad: false,
+        });
+      }
     }
   }
 
@@ -66,16 +74,7 @@ export class App extends Component {
     });
   };
 
-  handleCloseModal = e => {
-    if (e.currentTarget === e.target) {
-      this.setState({
-        modalOpen: false,
-        modalImg: '',
-        modalAlt: '',
-      });
-    }
-  };
-  handleKeydownCloseModal = () => {
+  handleCloseModal = () => {
     this.setState({
       modalOpen: false,
       modalImg: '',
@@ -100,7 +99,6 @@ export class App extends Component {
             src={modalImg}
             alt={modalAlt}
             handleClose={this.handleCloseModal}
-            closeModalOnkeyDown={this.handleKeydownCloseModal}
           />
         )}
       </>
