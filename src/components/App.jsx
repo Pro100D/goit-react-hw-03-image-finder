@@ -1,4 +1,6 @@
 import { Component } from 'react';
+import Notiflix from 'notiflix';
+
 import { SearchBar } from './searchBar/SearchBar';
 import { Gallary } from './imageGallary/ImageGallery';
 import { Button } from './LoadMoreBtn/Button';
@@ -25,11 +27,22 @@ export class App extends Component {
     if (prevState.searchValue !== searchValue || prevState.page !== page) {
       this.setState({ isLoad: true });
       try {
-        const response = await fetchImages(searchValue, page);
+        const response = await fetchImages(searchValue.trim(), page);
+
+        if (response.totalHits === 0) {
+          Notiflix.Notify.failure('Oops, nothing found for that name :(');
+          return;
+        }
+        // Достаём нужные данные с обьекта
+        const responseHits = response.hits.map(hit => ({
+          id: hit.id,
+          webformatURL: hit.webformatURL,
+          largeImageURL: hit.largeImageURL,
+          tags: hit.tags,
+        }));
 
         this.setState({
-          images: [...images, ...response.hits],
-
+          images: [...images, ...responseHits],
           showBtn: this.state.page < Math.ceil(response.totalHits / 12),
         });
       } catch (error) {
@@ -88,12 +101,10 @@ export class App extends Component {
 
     return (
       <>
-        {isLoad && <Loader />}
-
         <SearchBar onSubmit={this.handleSubmit} />
+        {isLoad && <Loader />}
         <Gallary arrayImage={images} onImgClick={this.handleImageClick} />
         {showBtn && <Button onClick={this.handleClickMore} />}
-
         {modalOpen && (
           <Modal
             src={modalImg}
